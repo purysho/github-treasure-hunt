@@ -1,14 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
+  GitHubRateLimitError,
   searchRepositories,
   surpriseRepository,
 } from "./api/github.js";
 import CategoryChips from "./components/CategoryChips.jsx";
+import RateLimitNotice from "./components/RateLimitNotice.jsx";
 import RepoCard from "./components/RepoCard.jsx";
 import SearchBar from "./components/SearchBar.jsx";
 import StarBandToggle from "./components/StarBandToggle.jsx";
 import SurpriseButton from "./components/SurpriseButton.jsx";
 import ThirtyMinButton from "./components/ThirtyMinButton.jsx";
+import TokenSettings from "./components/TokenSettings.jsx";
+
+const TOKEN_STORAGE_KEY = "github-treasure-hunt.token";
+
+function readStoredToken() {
+  try {
+    return window.localStorage.getItem(TOKEN_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
 
 export default function App() {
   const [filters, setFilters] = useState({
@@ -20,7 +33,22 @@ export default function App() {
   const [repositories, setRepositories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [rateLimitUntil, setRateLimitUntil] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [token, setToken] = useState(readStoredToken);
   const surpriseDice = useRef(null);
+
+  function handleFailure(error) {
+    setRepositories([]);
+
+    if (error instanceof GitHubRateLimitError) {
+      setRateLimitUntil(error.resetAt);
+      setMessage("");
+      return;
+    }
+
+    setMessage("GitHub is taking a breather. Please try again shortly.");
+  }
 
   useEffect(() => {
     const activeFilters = {
@@ -48,7 +76,7 @@ export default function App() {
       try {
         const result = await searchRepositories(
           activeFilters,
-          { signal: controller.signal },
+          { signal: controller.signal, token },
         );
         const items = filters.thirtyMin
           ? result.items.filter((repository) => repository.description)
@@ -61,8 +89,7 @@ export default function App() {
         );
       } catch (error) {
         if (error.name !== "AbortError") {
-          setRepositories([]);
-          setMessage("GitHub is taking a breather. Please try again shortly.");
+          handleFailure(error);
         }
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -78,6 +105,7 @@ export default function App() {
     filters.starBand,
     filters.text,
     filters.thirtyMin,
+    token,
   ]);
 
   function updateFilter(name, value) {
@@ -92,16 +120,34 @@ export default function App() {
     try {
       const result = await surpriseRepository(filters, {
         dice: surpriseDice.current,
+        token,
       });
       surpriseDice.current = result.dice;
       setRepositories(result.repository ? [result.repository] : []);
       setMessage(result.message);
-    } catch {
-      setRepositories([]);
-      setMessage("GitHub is taking a breather. Please try again shortly.");
+    } catch (error) {
+      handleFailure(error);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function saveToken(value) {
+    const nextToken = value.trim();
+
+    try {
+      if (nextToken) {
+        window.localStorage.setItem(TOKEN_STORAGE_KEY, nextToken);
+      } else {
+        window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+      }
+    } catch {
+      setMessage("This browser could not save that setting.");
+      return;
+    }
+
+    setToken(nextToken);
+    setSettingsOpen(false);
   }
 
   return (
@@ -129,7 +175,16 @@ export default function App() {
           onChange={(value) => updateFilter("thirtyMin", value)}
         />
         <SurpriseButton disabled={isLoading} onClick={handleSurprise} />
+        <button
+          className="mx-auto block rounded text-sm text-blue-600 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+          onClick={() => setSettingsOpen(true)}
+          type="button"
+        >
+          Settings
+        </button>
       </div>
+
+      <RateLimitNotice until={rateLimitUntil} />
 
       <section aria-busy={isLoading} aria-live="polite" className="mt-10">
         {isLoading ? (
@@ -149,6 +204,13 @@ export default function App() {
           ))}
         </div>
       </section>
+
+      <TokenSettings
+        open={settingsOpen}
+        token={token}
+        onClose={() => setSettingsOpen(false)}
+        onSave={saveToken}
+      />
     </main>
   );
 }

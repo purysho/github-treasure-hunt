@@ -21,6 +21,14 @@ export const TOPICS = [
 
 const DICE_START_YEAR = 2010;
 
+export class GitHubRateLimitError extends Error {
+  constructor(resetAt) {
+    super("GitHub asked us to breathe.");
+    this.name = "GitHubRateLimitError";
+    this.resetAt = resetAt;
+  }
+}
+
 function formatDate(date) {
   return date.toISOString().slice(0, 10);
 }
@@ -100,7 +108,7 @@ export function buildQuery(filters = {}, dice = null, now = new Date()) {
 
 export async function searchRepositories(
   filters,
-  { dice = null, signal } = {},
+  { dice = null, signal, token = "" } = {},
 ) {
   const query = buildQuery(filters, dice);
   const cached = getCachedResults(query);
@@ -118,10 +126,22 @@ export async function searchRepositories(
   url.searchParams.set("q", query);
   url.searchParams.set("per_page", "30");
 
+  const headers = { Accept: "application/vnd.github+json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const response = await fetch(url, {
-    headers: { Accept: "application/vnd.github+json" },
+    headers,
     signal,
   });
+
+  if (response.status === 403 || response.status === 429) {
+    const resetSeconds = Number(response.headers.get("X-RateLimit-Reset"));
+    throw new GitHubRateLimitError(
+      Number.isFinite(resetSeconds) && resetSeconds > 0
+        ? resetSeconds * 1000
+        : Date.now() + 60_000,
+    );
+  }
 
   if (!response.ok) {
     throw new Error("GitHub search is unavailable right now.");
@@ -139,8 +159,8 @@ export async function searchRepositories(
   };
 }
 
-async function searchSurpriseSlice(filters, dice, signal) {
-  const primary = await searchRepositories(filters, { dice, signal });
+async function searchSurpriseSlice(filters, dice, signal, token) {
+  const primary = await searchRepositories(filters, { dice, signal, token });
 
   if (
     primary.totalCount === 0 &&
@@ -153,6 +173,7 @@ async function searchSurpriseSlice(filters, dice, signal) {
       result: await searchRepositories(filters, {
         dice: fallbackDice,
         signal,
+        token,
       }),
     };
   }
@@ -162,7 +183,7 @@ async function searchSurpriseSlice(filters, dice, signal) {
 
 export async function surpriseRepository(
   filters,
-  { dice = null, random = Math.random, signal } = {},
+  { dice = null, random = Math.random, signal, token = "" } = {},
 ) {
   let activeDice = dice ?? rollDice(random);
   const isEligible = filters.thirtyMin
@@ -170,7 +191,12 @@ export async function surpriseRepository(
     : () => true;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const searched = await searchSurpriseSlice(filters, activeDice, signal);
+    const searched = await searchSurpriseSlice(
+      filters,
+      activeDice,
+      signal,
+      token,
+    );
     activeDice = searched.dice;
     const repository = takeRandomUnseen(
       searched.result.query,
@@ -354,6 +380,44 @@ if (import.meta.vitest) {
       });
       expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(fetchMock.mock.calls[1][0].search).not.toContain("created%3A");
+    });
+
+    it("adds a user-supplied token only to the outbound request", async () => {
+      const userValue = String(Date.now());
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ items: [], total_count: 0 }),
+        ok: true,
+        status: 200,
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      await searchRepositories(
+        { text: "token-header-check" },
+        { token: userValue },
+      );
+
+      expect(fetchMock.mock.calls[0][1].headers).toEqual({
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${userValue}`,
+      });
+    });
+
+    it("turns a 403 reset header into a rate-limit error", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          headers: { get: () => "1800000000" },
+          ok: false,
+          status: 403,
+        }),
+      );
+
+      await expect(
+        searchRepositories({ text: "rate-limit-check" }),
+      ).rejects.toMatchObject({
+        name: "GitHubRateLimitError",
+        resetAt: 1_800_000_000_000,
+      });
     });
   });
 }
