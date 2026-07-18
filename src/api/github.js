@@ -91,6 +91,33 @@ export function buildQuery(filters = {}, dice = null, now = new Date()) {
   return parts.join(" ");
 }
 
+export async function searchRepositories(
+  filters,
+  { dice = null, signal } = {},
+) {
+  const query = buildQuery(filters, dice);
+  const url = new URL("https://api.github.com/search/repositories");
+  url.searchParams.set("q", query);
+  url.searchParams.set("per_page", "30");
+
+  const response = await fetch(url, {
+    headers: { Accept: "application/vnd.github+json" },
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error("GitHub search is unavailable right now.");
+  }
+
+  const data = await response.json();
+
+  return {
+    items: data.items ?? [],
+    query,
+    totalCount: data.total_count ?? 0,
+  };
+}
+
 if (import.meta.vitest) {
   const { describe, expect, it } = import.meta.vitest;
 

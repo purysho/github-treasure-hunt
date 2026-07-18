@@ -1,22 +1,82 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { searchRepositories } from "./api/github.js";
+import RepoCard from "./components/RepoCard.jsx";
+import SearchBar from "./components/SearchBar.jsx";
 
 export default function App() {
+  const [text, setText] = useState("");
+  const [repositories, setRepositories] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const trimmedText = text.trim();
+
+    if (!trimmedText) {
+      setRepositories([]);
+      setMessage("");
+      setIsLoading(false);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      setIsLoading(true);
+      setMessage("");
+
+      try {
+        const result = await searchRepositories(
+          { text: trimmedText },
+          { signal: controller.signal },
+        );
+        setRepositories(result.items);
+        setMessage(
+          result.items.length === 0
+            ? "No gems here — try a different search."
+            : "",
+        );
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setRepositories([]);
+          setMessage("GitHub is taking a breather. Please try again shortly.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [text]);
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center px-5 pt-24 sm:px-8 sm:pt-32">
+    <main className="mx-auto min-h-screen w-full max-w-2xl px-5 pb-16 pt-20 sm:px-8 sm:pt-24">
       <h1 className="text-center text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
         GitHub <span className="text-blue-600">Treasure Hunt</span>
       </h1>
 
-      <label className="mt-10 w-full" htmlFor="repo-search">
-        <span className="sr-only">Search open-source repositories</span>
-        <input
-          className="h-14 w-full rounded-xl border border-slate-300 bg-white px-5 text-base text-slate-950 shadow-sm outline-none transition placeholder:text-slate-500 hover:border-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
-          id="repo-search"
-          name="search"
-          placeholder="Search open-source gems"
-          type="search"
-        />
-      </label>
+      <SearchBar value={text} onChange={setText} />
+
+      <section aria-busy={isLoading} aria-live="polite" className="mt-10">
+        {isLoading ? (
+          <p className="text-center text-sm text-slate-600">
+            Searching GitHub…
+          </p>
+        ) : null}
+        {!isLoading && message ? (
+          <p className="text-center text-sm text-slate-600">{message}</p>
+        ) : null}
+        {!isLoading && repositories.length > 0 ? (
+          <h2 className="sr-only">Repository results</h2>
+        ) : null}
+        <div className="space-y-4">
+          {repositories.map((repository) => (
+            <RepoCard key={repository.id} repository={repository} />
+          ))}
+        </div>
+      </section>
     </main>
   );
 }
