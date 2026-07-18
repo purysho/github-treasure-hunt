@@ -1,18 +1,34 @@
 import React, { useEffect, useState } from "react";
 import { searchRepositories } from "./api/github.js";
+import CategoryChips from "./components/CategoryChips.jsx";
 import RepoCard from "./components/RepoCard.jsx";
 import SearchBar from "./components/SearchBar.jsx";
+import StarBandToggle from "./components/StarBandToggle.jsx";
+import ThirtyMinButton from "./components/ThirtyMinButton.jsx";
 
 export default function App() {
-  const [text, setText] = useState("");
+  const [filters, setFilters] = useState({
+    category: "",
+    starBand: "",
+    text: "",
+    thirtyMin: false,
+  });
   const [repositories, setRepositories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const trimmedText = text.trim();
+    const activeFilters = {
+      ...filters,
+      text: filters.text.trim(),
+    };
+    const hasActiveFilters =
+      activeFilters.text ||
+      activeFilters.category ||
+      activeFilters.starBand ||
+      activeFilters.thirtyMin;
 
-    if (!trimmedText) {
+    if (!hasActiveFilters) {
       setRepositories([]);
       setMessage("");
       setIsLoading(false);
@@ -26,12 +42,15 @@ export default function App() {
 
       try {
         const result = await searchRepositories(
-          { text: trimmedText },
+          activeFilters,
           { signal: controller.signal },
         );
-        setRepositories(result.items);
+        const items = filters.thirtyMin
+          ? result.items.filter((repository) => repository.description)
+          : result.items;
+        setRepositories(items);
         setMessage(
-          result.items.length === 0
+          items.length === 0
             ? "No gems here — try a different search."
             : "",
         );
@@ -49,7 +68,16 @@ export default function App() {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [text]);
+  }, [
+    filters.category,
+    filters.starBand,
+    filters.text,
+    filters.thirtyMin,
+  ]);
+
+  function updateFilter(name, value) {
+    setFilters((current) => ({ ...current, [name]: value }));
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl px-5 pb-16 pt-20 sm:px-8 sm:pt-24">
@@ -57,7 +85,25 @@ export default function App() {
         GitHub <span className="text-blue-600">Treasure Hunt</span>
       </h1>
 
-      <SearchBar value={text} onChange={setText} />
+      <SearchBar
+        value={filters.text}
+        onChange={(value) => updateFilter("text", value)}
+      />
+
+      <div className="mt-6 space-y-6">
+        <CategoryChips
+          value={filters.category}
+          onChange={(value) => updateFilter("category", value)}
+        />
+        <StarBandToggle
+          value={filters.starBand}
+          onChange={(value) => updateFilter("starBand", value)}
+        />
+        <ThirtyMinButton
+          active={filters.thirtyMin}
+          onChange={(value) => updateFilter("thirtyMin", value)}
+        />
+      </div>
 
       <section aria-busy={isLoading} aria-live="polite" className="mt-10">
         {isLoading ? (

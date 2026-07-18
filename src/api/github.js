@@ -1,3 +1,9 @@
+import {
+  cacheResults,
+  clearPouch,
+  getCachedResults,
+} from "../lib/pouch.js";
+
 export const TOPICS = [
   "ai",
   "machine-learning",
@@ -96,6 +102,17 @@ export async function searchRepositories(
   { dice = null, signal } = {},
 ) {
   const query = buildQuery(filters, dice);
+  const cached = getCachedResults(query);
+
+  if (cached) {
+    return {
+      fromCache: true,
+      items: cached,
+      query,
+      totalCount: cached.length,
+    };
+  }
+
   const url = new URL("https://api.github.com/search/repositories");
   url.searchParams.set("q", query);
   url.searchParams.set("per_page", "30");
@@ -110,16 +127,24 @@ export async function searchRepositories(
   }
 
   const data = await response.json();
+  const items = data.items ?? [];
+  cacheResults(query, items);
 
   return {
-    items: data.items ?? [],
+    fromCache: false,
+    items,
     query,
     totalCount: data.total_count ?? 0,
   };
 }
 
 if (import.meta.vitest) {
-  const { describe, expect, it } = import.meta.vitest;
+  const { afterEach, describe, expect, it, vi } = import.meta.vitest;
+
+  afterEach(() => {
+    clearPouch();
+    vi.unstubAllGlobals();
+  });
 
   describe("buildQuery", () => {
     it("covers every repository qualifier in section 5.1", () => {
@@ -198,6 +223,33 @@ if (import.meta.vitest) {
         randomTopic: "ai",
         randomDateSlice: "2010-01-01..2010-04-01",
       });
+    });
+  });
+
+  describe("searchRepositories", () => {
+    it("hits the pouch for a repeated filter combination", async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({
+          items: [{ id: 1, full_name: "example/gem" }],
+          total_count: 1,
+        }),
+        ok: true,
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const first = await searchRepositories({
+        category: "climate",
+        starBand: "<100",
+      });
+      const second = await searchRepositories({
+        category: "climate",
+        starBand: "<100",
+      });
+
+      expect(first.fromCache).toBe(false);
+      expect(second.fromCache).toBe(true);
+      expect(second.items).toEqual(first.items);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
   });
 }
