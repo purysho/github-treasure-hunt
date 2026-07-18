@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { searchRepositories } from "./api/github.js";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  searchRepositories,
+  surpriseRepository,
+} from "./api/github.js";
 import CategoryChips from "./components/CategoryChips.jsx";
 import RepoCard from "./components/RepoCard.jsx";
 import SearchBar from "./components/SearchBar.jsx";
 import StarBandToggle from "./components/StarBandToggle.jsx";
+import SurpriseButton from "./components/SurpriseButton.jsx";
 import ThirtyMinButton from "./components/ThirtyMinButton.jsx";
 
 export default function App() {
@@ -16,6 +20,7 @@ export default function App() {
   const [repositories, setRepositories] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const surpriseDice = useRef(null);
 
   useEffect(() => {
     const activeFilters = {
@@ -76,7 +81,27 @@ export default function App() {
   ]);
 
   function updateFilter(name, value) {
+    surpriseDice.current = null;
     setFilters((current) => ({ ...current, [name]: value }));
+  }
+
+  async function handleSurprise() {
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      const result = await surpriseRepository(filters, {
+        dice: surpriseDice.current,
+      });
+      surpriseDice.current = result.dice;
+      setRepositories(result.repository ? [result.repository] : []);
+      setMessage(result.message);
+    } catch {
+      setRepositories([]);
+      setMessage("GitHub is taking a breather. Please try again shortly.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -103,6 +128,7 @@ export default function App() {
           active={filters.thirtyMin}
           onChange={(value) => updateFilter("thirtyMin", value)}
         />
+        <SurpriseButton disabled={isLoading} onClick={handleSurprise} />
       </div>
 
       <section aria-busy={isLoading} aria-live="polite" className="mt-10">

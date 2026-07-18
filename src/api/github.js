@@ -2,6 +2,7 @@ import {
   cacheResults,
   clearPouch,
   getCachedResults,
+  takeRandomUnseen,
 } from "../lib/pouch.js";
 
 export const TOPICS = [
@@ -138,6 +139,66 @@ export async function searchRepositories(
   };
 }
 
+async function searchSurpriseSlice(filters, dice, signal) {
+  const primary = await searchRepositories(filters, { dice, signal });
+
+  if (
+    primary.totalCount === 0 &&
+    !primary.fromCache &&
+    dice.randomDateSlice
+  ) {
+    const fallbackDice = { ...dice, randomDateSlice: "" };
+    return {
+      dice: fallbackDice,
+      result: await searchRepositories(filters, {
+        dice: fallbackDice,
+        signal,
+      }),
+    };
+  }
+
+  return { dice, result: primary };
+}
+
+export async function surpriseRepository(
+  filters,
+  { dice = null, random = Math.random, signal } = {},
+) {
+  let activeDice = dice ?? rollDice(random);
+  const isEligible = filters.thirtyMin
+    ? (repository) => Boolean(repository.description)
+    : () => true;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const searched = await searchSurpriseSlice(filters, activeDice, signal);
+    activeDice = searched.dice;
+    const repository = takeRandomUnseen(
+      searched.result.query,
+      random,
+      isEligible,
+    );
+
+    if (repository) {
+      return { dice: activeDice, message: "", repository };
+    }
+
+    if (
+      searched.result.totalCount === 0 &&
+      !searched.result.fromCache
+    ) {
+      break;
+    }
+
+    activeDice = rollDice(random);
+  }
+
+  return {
+    dice: null,
+    message: "No gems here — loosen a filter.",
+    repository: null,
+  };
+}
+
 if (import.meta.vitest) {
   const { afterEach, describe, expect, it, vi } = import.meta.vitest;
 
@@ -250,6 +311,49 @@ if (import.meta.vitest) {
       expect(second.fromCache).toBe(true);
       expect(second.items).toEqual(first.items);
       expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("serves 30 surprises from one network response", async () => {
+      const items = Array.from({ length: 30 }, (_, index) => ({
+        description: `Gem ${index + 1}`,
+        id: index + 1,
+      }));
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ items, total_count: 30 }),
+        ok: true,
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      let dice = null;
+      const ids = [];
+
+      for (let index = 0; index < 30; index += 1) {
+        const result = await surpriseRepository(
+          {},
+          { dice, random: () => 0 },
+        );
+        dice = result.dice;
+        ids.push(result.repository.id);
+      }
+
+      expect(new Set(ids).size).toBe(30);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries one time without the date slice for empty results", async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ items: [], total_count: 0 }),
+        ok: true,
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await surpriseRepository({}, { random: () => 0 });
+
+      expect(result).toMatchObject({
+        message: "No gems here — loosen a filter.",
+        repository: null,
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[1][0].search).not.toContain("created%3A");
     });
   });
 }
