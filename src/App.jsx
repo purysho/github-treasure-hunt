@@ -151,17 +151,20 @@ export default function App() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-2xl px-5 pb-16 pt-12 sm:px-8 sm:pt-14">
-      <h1 className="text-center text-4xl font-semibold tracking-tight text-slate-950 sm:text-[2.5rem]">
-        GitHub Treasure Hunt
-      </h1>
+    <main className="treasure-shell">
+      <header className="treasure-header">
+        <h1>
+          <span>GitHub</span>
+          <span>Treasure Hunt</span>
+        </h1>
+      </header>
 
       <SearchBar
         value={filters.text}
         onChange={(value) => updateFilter("text", value)}
       />
 
-      <div className="mt-6 space-y-6">
+      <div className="filter-stack">
         <CategoryChips
           value={filters.category}
           onChange={(value) => updateFilter("category", value)}
@@ -170,14 +173,14 @@ export default function App() {
           value={filters.starBand}
           onChange={(value) => updateFilter("starBand", value)}
         />
-        <div className="grid gap-3 sm:grid-cols-[1fr_1.25fr_auto] sm:items-center">
+        <div className="action-row">
           <ThirtyMinButton
             active={filters.thirtyMin}
             onChange={(value) => updateFilter("thirtyMin", value)}
           />
           <SurpriseButton disabled={isLoading} onClick={handleSurprise} />
           <button
-            className="mx-auto block rounded px-2 py-2 text-sm text-blue-600 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 sm:justify-self-end"
+            className="settings-link"
             onClick={() => setSettingsOpen(true)}
             type="button"
           >
@@ -188,19 +191,15 @@ export default function App() {
 
       <RateLimitNotice until={rateLimitUntil} />
 
-      <section aria-busy={isLoading} aria-live="polite" className="mt-10">
-        {isLoading ? (
-          <p className="text-center text-sm text-slate-600">
-            Searching GitHub…
-          </p>
-        ) : null}
+      <section aria-busy={isLoading} aria-live="polite" className="results-list">
+        {isLoading ? <p className="status-message">Searching GitHub…</p> : null}
         {!isLoading && message ? (
-          <p className="text-center text-sm text-slate-600">{message}</p>
+          <p className="status-message">{message}</p>
         ) : null}
         {!isLoading && repositories.length > 0 ? (
           <h2 className="sr-only">Repository results</h2>
         ) : null}
-        <div className="space-y-4">
+        <div className="repository-stack">
           {repositories.map((repository) => (
             <RepoCard key={repository.id} repository={repository} />
           ))}

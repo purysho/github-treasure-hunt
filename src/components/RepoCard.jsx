@@ -26,30 +26,36 @@ function humanizeDate(value) {
 
 export default function RepoCard({ repository }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 transition hover:border-slate-300">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h3 className="min-w-0 break-words text-lg font-semibold text-blue-600">
-          {repository.full_name}
-        </h3>
-        <span className="shrink-0 text-sm text-slate-600">
-          ⭐ {repository.stargazers_count.toLocaleString()}
+    <article className="repository-card">
+      <div className="repository-heading">
+        <h3>{repository.full_name}</h3>
+        <span className="star-count">
+          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+            <path d="m12 3 2.75 5.6 6.18.9-4.47 4.35 1.05 6.15L12 17.1 6.49 20l1.05-6.15L3.07 9.5l6.18-.9L12 3Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.5" />
+          </svg>
+          {repository.stargazers_count.toLocaleString()}
         </span>
       </div>
 
-      <p className="mt-3 leading-7 text-slate-700">
+      <p className="repository-description">
         {repository.description || "No description provided."}
       </p>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+      <div className="repository-meta">
         <span>{repository.language || "Unknown language"}</span>
+        <span aria-hidden="true" className="meta-separator">•</span>
         <span>Updated {humanizeDate(repository.pushed_at)}</span>
         <a
-          className="ml-auto rounded text-blue-600 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+          className="repository-link"
           href={repository.html_url}
           rel="noreferrer"
           target="_blank"
         >
           Open Repository
+          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+            <path d="M14 4h6v6M20 4l-9 9" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+            <path d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+          </svg>
         </a>
       </div>
     </article>

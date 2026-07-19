@@ -19,31 +19,31 @@ export default function TokenSettings({ open, token, onClose, onSave }) {
     <dialog
       aria-modal="true"
       aria-labelledby="token-settings-title"
-      className="fixed inset-0 z-10 m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-slate-200 bg-white p-0 text-slate-950 shadow-xl backdrop:bg-slate-950/30"
+      className="settings-dialog"
       onCancel={onClose}
       ref={dialog}
     >
       <form
-        className="p-6"
+        className="settings-form"
         onSubmit={(event) => {
           event.preventDefault();
           onSave(draft);
         }}
       >
-        <h2 className="text-xl font-semibold" id="token-settings-title">
+        <h2 id="token-settings-title">
           GitHub API settings
         </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
+        <p className="settings-copy">
           Add your own fine-grained, public read-only PAT for a higher search
           limit. It stays only in this browser.
         </p>
 
-        <label className="mt-5 block text-sm font-semibold" htmlFor="token">
+        <label className="settings-label" htmlFor="token">
           Personal access token
         </label>
         <input
           autoComplete="off"
-          className="mt-2 h-11 w-full rounded-lg border border-slate-300 px-3 outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+          className="settings-input"
           id="token"
           onChange={(event) => setDraft(event.target.value)}
           ref={tokenInput}
@@ -51,16 +51,16 @@ export default function TokenSettings({ open, token, onClose, onSave }) {
           value={draft}
         />
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="settings-actions">
           <button
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 outline-none hover:border-slate-400 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            className="dialog-button dialog-button-secondary"
             onClick={onClose}
             type="button"
           >
             Cancel
           </button>
           <button
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white outline-none hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+            className="dialog-button dialog-button-primary"
             type="submit"
           >
             Save

@@ -4,14 +4,14 @@ export default function ThirtyMinButton({ active, onChange }) {
   return (
     <button
       aria-pressed={active}
-      className={`w-full rounded-lg border px-4 py-3 text-sm font-semibold outline-none transition focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-        active
-          ? "border-blue-600 bg-blue-50 text-blue-700"
-          : "border-slate-300 bg-white text-slate-700 hover:border-slate-400"
-      }`}
+      className={`time-button${active ? " is-active" : ""}`}
       onClick={() => onChange(!active)}
       type="button"
     >
+      <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M12 7.5V12l3 2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      </svg>
       I have 30 minutes
     </button>
   );

@@ -9,22 +9,20 @@ const starBands = [
 
 export default function StarBandToggle({ value, onChange }) {
   return (
-    <fieldset className="sm:flex sm:items-center sm:gap-4">
-      <legend className="mb-3 text-sm font-semibold text-slate-900 sm:mb-0 sm:w-28 sm:shrink-0">
-        Hidden Gems
-      </legend>
-      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+    <fieldset className="star-filter">
+      <legend>Hidden Gems</legend>
+      <div className="star-band-grid">
         {starBands.map(([label, band]) => (
-          <label className="relative" key={label}>
+          <label className="star-band-option" key={label}>
             <input
               checked={value === band}
-              className="peer sr-only"
+              className="sr-only"
               name="star-band"
               onChange={() => onChange(band)}
               type="radio"
               value={band}
             />
-            <span className="flex min-h-10 cursor-pointer items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-center text-sm font-medium text-slate-700 transition hover:border-slate-400 peer-checked:border-blue-600 peer-checked:bg-blue-50 peer-checked:text-blue-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-600 peer-focus-visible:ring-offset-2">
+            <span>
               {label}
             </span>
           </label>

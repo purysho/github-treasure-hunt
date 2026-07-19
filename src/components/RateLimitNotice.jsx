@@ -25,7 +25,7 @@ export default function RateLimitNotice({ until }) {
 
   return (
     <p
-      className="mt-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-center text-sm text-blue-900"
+      className="rate-limit-notice"
       role="status"
     >
       GitHub asked us to breathe for {seconds} second
