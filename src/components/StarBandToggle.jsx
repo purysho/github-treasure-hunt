@@ -9,11 +9,11 @@ const starBands = [
 
 export default function StarBandToggle({ value, onChange }) {
   return (
-    <fieldset>
-      <legend className="mb-3 text-sm font-semibold text-slate-900">
+    <fieldset className="sm:flex sm:items-center sm:gap-4">
+      <legend className="mb-3 text-sm font-semibold text-slate-900 sm:mb-0 sm:w-28 sm:shrink-0">
         Hidden Gems
       </legend>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
         {starBands.map(([label, band]) => (
           <label className="relative" key={label}>
             <input

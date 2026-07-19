@@ -13,7 +13,7 @@ import SurpriseButton from "./components/SurpriseButton.jsx";
 import ThirtyMinButton from "./components/ThirtyMinButton.jsx";
 import TokenSettings from "./components/TokenSettings.jsx";
 
-const TOKEN_STORAGE_KEY = "github-treasure-hunt.token";
+const TOKEN_STORAGE_KEY = "github-treasure-hunt.token.v1";
 
 function readStoredToken() {
   try {
@@ -151,9 +151,9 @@ export default function App() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-2xl px-5 pb-16 pt-20 sm:px-8 sm:pt-24">
-      <h1 className="text-center text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-        GitHub <span className="text-blue-600">Treasure Hunt</span>
+    <main className="mx-auto min-h-screen w-full max-w-2xl px-5 pb-16 pt-12 sm:px-8 sm:pt-14">
+      <h1 className="text-center text-4xl font-semibold tracking-tight text-slate-950 sm:text-[2.5rem]">
+        GitHub Treasure Hunt
       </h1>
 
       <SearchBar
@@ -170,18 +170,20 @@ export default function App() {
           value={filters.starBand}
           onChange={(value) => updateFilter("starBand", value)}
         />
-        <ThirtyMinButton
-          active={filters.thirtyMin}
-          onChange={(value) => updateFilter("thirtyMin", value)}
-        />
-        <SurpriseButton disabled={isLoading} onClick={handleSurprise} />
-        <button
-          className="mx-auto block rounded text-sm text-blue-600 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-          onClick={() => setSettingsOpen(true)}
-          type="button"
-        >
-          Settings
-        </button>
+        <div className="grid gap-3 sm:grid-cols-[1fr_1.25fr_auto] sm:items-center">
+          <ThirtyMinButton
+            active={filters.thirtyMin}
+            onChange={(value) => updateFilter("thirtyMin", value)}
+          />
+          <SurpriseButton disabled={isLoading} onClick={handleSurprise} />
+          <button
+            className="mx-auto block rounded px-2 py-2 text-sm text-blue-600 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 sm:justify-self-end"
+            onClick={() => setSettingsOpen(true)}
+            type="button"
+          >
+            Settings
+          </button>
+        </div>
       </div>
 
       <RateLimitNotice until={rateLimitUntil} />
