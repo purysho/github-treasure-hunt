@@ -153,41 +153,53 @@ export default function App() {
   return (
     <main className="treasure-shell">
       <header className="treasure-header">
-        <h1>
-          <span>GitHub</span>
-          <span>Treasure Hunt</span>
-        </h1>
+        <div className="brand-line">
+          <span aria-hidden="true" className="brand-mark">✦</span>
+          <span>Open-source discovery</span>
+        </div>
+        <h1>Find your next<br /><em>favourite project.</em></h1>
+        <p className="hero-copy">
+          A calm little corner of GitHub for projects worth a closer look.
+        </p>
       </header>
 
-      <SearchBar
-        value={filters.text}
-        onChange={(value) => updateFilter("text", value)}
-      />
+      <section className="discovery-panel" aria-label="Repository discovery filters">
+        <SearchBar
+          value={filters.text}
+          onChange={(value) => updateFilter("text", value)}
+        />
 
-      <div className="filter-stack">
-        <CategoryChips
-          value={filters.category}
-          onChange={(value) => updateFilter("category", value)}
-        />
-        <StarBandToggle
-          value={filters.starBand}
-          onChange={(value) => updateFilter("starBand", value)}
-        />
-        <div className="action-row">
-          <ThirtyMinButton
-            active={filters.thirtyMin}
-            onChange={(value) => updateFilter("thirtyMin", value)}
+        <div className="filter-stack">
+          <div className="filter-heading">
+            <span>Explore by topic</span>
+            <span>Pick one to start</span>
+          </div>
+          <CategoryChips
+            value={filters.category}
+            onChange={(value) => updateFilter("category", value)}
           />
-          <SurpriseButton disabled={isLoading} onClick={handleSurprise} />
-          <button
-            className="settings-link"
-            onClick={() => setSettingsOpen(true)}
-            type="button"
-          >
-            Settings
-          </button>
+          <StarBandToggle
+            value={filters.starBand}
+            onChange={(value) => updateFilter("starBand", value)}
+          />
+          <div className="action-row">
+            <ThirtyMinButton
+              active={filters.thirtyMin}
+              onChange={(value) => updateFilter("thirtyMin", value)}
+            />
+            <SurpriseButton disabled={isLoading} onClick={handleSurprise} />
+            <button
+              aria-label="Open GitHub API settings"
+              className="settings-link"
+              onClick={() => setSettingsOpen(true)}
+              type="button"
+            >
+              <span aria-hidden="true">⚙</span>
+              Settings
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
       <RateLimitNotice until={rateLimitUntil} />
 
