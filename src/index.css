@@ -76,7 +76,7 @@
   .time-button:focus-visible, .surprise-button:focus-visible { box-shadow: 0 0 0 4px rgba(56,87,233,.16); }
   .settings-link { display: inline-flex; align-items: center; gap: 6px; align-self: center; border: 0; border-radius: 8px; outline: none; background: transparent; color: var(--muted); padding: 11px 7px; font-size: .8rem; font-weight: 650; }
   .settings-link:hover { color: var(--accent-deep); }
-  .settings-link:focus-visible, .repository-link:focus-visible { box-shadow: 0 0 0 3px rgba(56,87,233,.18); }
+  .settings-link:focus-visible, .repository-link:focus-visible, .repository-share:focus-visible { box-shadow: 0 0 0 3px rgba(56,87,233,.18); }
 
   .results-list { min-height: 72px; margin-top: 26px; }
   .repository-stack { display: grid; gap: 12px; }
@@ -90,7 +90,10 @@
   .repository-description { max-width: 680px; margin: 9px 0 0; color: #475467; font-size: .92rem; line-height: 1.55; }
   .repository-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 11px; margin-top: 14px; color: var(--muted); font-size: .81rem; }
   .meta-separator { color: #c4cad5; }
-  .repository-link { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; border-radius: 5px; outline: none; color: var(--accent); font-weight: 700; text-decoration: none; }
+  .repository-share { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; border: 0; border-radius: 5px; outline: none; background: transparent; color: var(--muted); padding: 2px 0; font-size: inherit; font-weight: 700; }
+  .repository-share:hover { color: var(--accent-deep); }
+  .repository-share svg { width: 16px; height: 16px; }
+  .repository-link { display: inline-flex; align-items: center; gap: 5px; margin-left: 0; border-radius: 5px; outline: none; color: var(--accent); font-weight: 700; text-decoration: none; }
   .repository-link:hover { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 4px; }
   .repository-link svg { width: 16px; height: 16px; }
   .rate-limit-notice { margin: 20px 0 0; border: 1px solid rgba(56,87,233,.28); border-radius: 12px; background: var(--accent-pale); color: #304272; padding: 13px 16px; text-align: center; font-size: .9rem; }
@@ -125,6 +128,7 @@
     .settings-link { justify-self: center; padding: 5px 10px; }
     .repository-card { border-radius: 13px; padding: 18px; }
     .repository-meta { margin-top: 12px; }
+    .repository-share { margin-left: 0; }
     .repository-link { flex-basis: 100%; margin: 3px 0 0; }
   }
 
