@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const relativeTime = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
@@ -25,6 +25,32 @@ function humanizeDate(value) {
 }
 
 export default function RepoCard({ repository }) {
+  const [shareStatus, setShareStatus] = useState("");
+
+  async function shareRepository() {
+    const shareData = {
+      title: `${repository.full_name} — GitHub Treasure Hunt`,
+      text: `A GitHub Treasure Hunt find: ${repository.full_name}${
+        repository.description ? ` — ${repository.description}` : ""
+      }`,
+      url: repository.html_url,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setShareStatus("Shared");
+      } else {
+        await navigator.clipboard.writeText(repository.html_url);
+        setShareStatus("Link copied");
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setShareStatus("Could not copy link");
+      }
+    }
+  }
+
   return (
     <article className="repository-card">
       <div className="repository-heading">
@@ -45,6 +71,18 @@ export default function RepoCard({ repository }) {
         <span>{repository.language || "Unknown language"}</span>
         <span aria-hidden="true" className="meta-separator">•</span>
         <span>Updated {humanizeDate(repository.pushed_at)}</span>
+        <button
+          aria-label={`Share ${repository.full_name}`}
+          className="repository-share"
+          onClick={shareRepository}
+          type="button"
+        >
+          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24">
+            <path d="M8 12.5 16 8m-8 3.5L16 16M18.5 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm0 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM5.5 15a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+          </svg>
+          {shareStatus || "Share"}
+        </button>
+        <span aria-live="polite" className="sr-only">{shareStatus}</span>
         <a
           className="repository-link"
           href={repository.html_url}
