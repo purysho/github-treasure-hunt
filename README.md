@@ -4,6 +4,8 @@ GitHub Treasure Hunt is a small, static discovery engine for open-source gems.
 Search by keyword, narrow the hunt with focused filters, or roll the dice for a
 serendipitous repository from GitHub's public search API.
 
+[Open GitHub Treasure Hunt](https://purysho.github.io/github-treasure-hunt/)
+
 ![GitHub Treasure Hunt search and discovery interface](docs/screenshot.png)
 
 ## Quick start
