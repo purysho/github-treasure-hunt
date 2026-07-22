@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+import { buildRepoStarUrl } from "../lib/sendToSky.js";
+
 const relativeTime = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
 function humanizeDate(value) {
@@ -26,6 +28,11 @@ function humanizeDate(value) {
 
 export default function RepoCard({ repository }) {
   const [shareStatus, setShareStatus] = useState("");
+
+  // Send this repo to Lodestar as a star (new tab preserves the hunt).
+  function sendToSky() {
+    globalThis.open(buildRepoStarUrl(repository), "_blank", "noopener");
+  }
 
   async function shareRepository() {
     const shareData = {
@@ -71,6 +78,14 @@ export default function RepoCard({ repository }) {
         <span>{repository.language || "Unknown language"}</span>
         <span aria-hidden="true" className="meta-separator">•</span>
         <span>Updated {humanizeDate(repository.pushed_at)}</span>
+        <button
+          aria-label={`Send ${repository.full_name} to your Lodestar sky`}
+          className="repository-share"
+          onClick={sendToSky}
+          type="button"
+        >
+          Send to sky ✦
+        </button>
         <button
           aria-label={`Share ${repository.full_name}`}
           className="repository-share"
