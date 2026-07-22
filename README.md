@@ -23,6 +23,20 @@ dice for a serendipitous repository from GitHub's public search API.
 - **Pass a good find along.** Share a repository directly from its card; on
   supported devices this opens the native share sheet, otherwise it copies the
   repository link.
+- **Send it to your sky.** Every repo card has a **Send to sky ✦** button that
+  opens [Lodestar](https://purysho.github.io/lodestar/) with the repository
+  pre-loaded as a star (tagged `origin: "treasure-hunt"`), so a find you want to
+  keep lands in your personal night sky.
+
+## The trilogy handoff
+
+Treasure Hunt is one of three connected tools. It is a stateless discovery
+engine; [Lodestar](https://purysho.github.io/lodestar/) is the memory layer.
+**Send to sky** encodes the repo into a small payload in the Lodestar URL hash
+(`…/lodestar/#/add?s=<encoded>`) — no backend, no shared storage, the URL is the
+whole wire. The shared payload + encoding contract lives in
+[`src/lib/starLink.js`](src/lib/starLink.js), copied verbatim from Lodestar and
+covered by a round-trip test so the sender and receiver never drift.
 
 ## Quick start
 
